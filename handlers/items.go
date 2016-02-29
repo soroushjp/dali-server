@@ -1,63 +1,93 @@
 package handlers
 
 import (
-	"time"
+	"database/sql"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/soroushjp/dali-server/context"
 	"github.com/soroushjp/dali-server/models"
 )
 
-// DEBUG ONLY REMOVE
-var myItems = []models.Item{
-	{
-		ID:          1,
-		CreatedDate: time.Date(2016, 2, 1, 0, 0, 0, 0, time.UTC),
-		Name:        "The Persistence of Memory",
-		Description: "By Salvador Dali (1931)",
-		Slug:        "the-persistence-of-memory",
-		Source:      "custom",
-		URLImage:    "http://uploads5.wikiart.org/images/salvador-dali/the-persistence-of-memory-1931.jpg",
-	},
-	{
-		ID:          2,
-		CreatedDate: time.Date(2016, 2, 1, 0, 0, 0, 0, time.UTC),
-		Name:        "Ballerina in a Death's Head",
-		Description: "By Salvador Dali (1939)",
-		Slug:        "ballerina-in-a-deaths-head",
-		Source:      "custom",
-		URLImage:    "http://uploads2.wikiart.org/images/salvador-dali/ballerina-in-a-death-s-head.jpg",
-	},
+// ErrorResponse holds response JSON for error responses.
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func respondWithError(c *gin.Context, message string) {
+	c.JSON(500, ErrorResponse{
+		Error: message,
+	})
 }
 
 // ItemsHandler provides methods for handling /items routes
-type ItemsHandler struct{}
+type ItemsHandler struct {
+	app *context.AppContext
+}
 
 // NewItemsHandler creates a new ItemsHandler.
-func NewItemsHandler() *ItemsHandler {
-	return &ItemsHandler{}
+func NewItemsHandler(app *context.AppContext) *ItemsHandler {
+	return &ItemsHandler{
+		app: app,
+	}
 }
 
 // Index returns all items.
-func (i *ItemsHandler) Index(c *gin.Context) {
-	c.JSON(200, myItems)
+func (h *ItemsHandler) Index(c *gin.Context) {
+	items, err := models.SelectItems(h.app.DB)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(c, "no items found.")
+		} else {
+			respondWithError(c, "unexpected error: could not get items.")
+		}
+		return
+	}
+	c.JSON(200, items)
 }
 
 // Create creates a new item.
-func (i *ItemsHandler) Create(c *gin.Context) {
-
+func (h *ItemsHandler) Create(c *gin.Context) {
+	var reqItem models.Item
+	if err := c.BindJSON(&reqItem); err != nil {
+		respondWithError(c, "bad request body.")
+		return
+	}
+	insertedItem, err := models.InsertItem(h.app.DB, reqItem)
+	if err != nil {
+		respondWithError(c, "unexpected error: could not create item.")
+		panic(err)
+	}
+	c.JSON(200, insertedItem)
 }
 
 // Read reads an item.
-func (i *ItemsHandler) Read(c *gin.Context) {
-
+func (h *ItemsHandler) Read(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(500, map[string]interface{}{
+			"error": "bad query parameter: 'id'.",
+		})
+		return
+	}
+	item, err := models.SelectItemByID(h.app.DB, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(c, "no item found with given id.")
+		} else {
+			respondWithError(c, "unexpected error: could not get item.")
+		}
+		return
+	}
+	c.JSON(200, item)
 }
 
 // Update updates an item.
-func (i *ItemsHandler) Update(c *gin.Context) {
+func (h *ItemsHandler) Update(c *gin.Context) {
 
 }
 
 // Delete deletes an item.
-func (i *ItemsHandler) Delete(c *gin.Context) {
+func (h *ItemsHandler) Delete(c *gin.Context) {
 
 }
