@@ -16,3 +16,11 @@ Server for Project Dali
 - Install and run PostgreSQL: http://www.postgresql.org/download/
 - `> go get bitbucket.org/liamstask/goose/cmd/goose`
 - `> goose up`
+
+### Env variables
+
+| name         | type   | description            | default value (if any) |
+|:-------------|:-------|:-----------------------|:-----------------------|
+| DALI_PORT    | uint   | Server port            |                        |
+| DALI_DB_NAME | string | Postgres database name |                        |
+| DALI_DB_USER | string | Postgres database user |                        |
