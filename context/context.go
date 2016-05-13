@@ -17,17 +17,17 @@ type AppContext struct {
 type serverEnvVars struct {
 	Port   uint   `envvar:"DALI_PORT"`
 	DBUser string `envvar:"DALI_DB_USER"`
-	DBName string `envvar:"DALI_DB_NAME_PREFIX"`
+	DBName string `envvar:"DALI_DB_NAME"`
 }
 
-// NewAppContext initializes and returns a new app context.
+// NewAppContextWithEnv initializes and returns a new app context.
 func NewAppContext() (*AppContext, error) {
-	// Get enviornment variables
+	// get enviornment variables
 	env := serverEnvVars{}
 	if err := envvar.Parse(&env); err != nil {
 		return nil, err
 	}
-	// Get DB connection
+	// get DB connection
 	db, err := sqlx.Connect(
 		"postgres",
 		"user="+env.DBUser+

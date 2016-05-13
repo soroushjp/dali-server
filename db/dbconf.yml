@@ -1,11 +1,7 @@
-production:
-  driver: postgres
-  open: user=dali dbname=dali_production sslmode=disable
-
 development:
   driver: postgres
-  open: user=dali dbname=dali_development sslmode=disable
+  open: user=dali dbname=dali sslmode=disable
 
 test:
   driver: postgres
-  open: user=dali dbname=dali_testing sslmode=disable
+  open: user=dali dbname=dali_test sslmode=disable
